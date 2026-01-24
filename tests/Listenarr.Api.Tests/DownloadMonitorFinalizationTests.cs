@@ -1,28 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Listenarr.Api.Hubs;
+using Listenarr.Api.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Reflection;
 using Xunit;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using Microsoft.AspNetCore.SignalR;
-using Listenarr.Api.Hubs;
 
 namespace Listenarr.Api.Tests
 {
     public class DownloadMonitorFinalizationTests
     {
-        private readonly Xunit.Abstractions.ITestOutputHelper _output;
+        private readonly ITestOutputHelper _output;
 
-        public DownloadMonitorFinalizationTests(Xunit.Abstractions.ITestOutputHelper output)
+        public DownloadMonitorFinalizationTests(ITestOutputHelper output)
         {
             _output = output;
         }
@@ -74,7 +66,7 @@ namespace Listenarr.Api.Tests
                 TotalSize = (long)(100 * 1024 * 1024) // 100 MB
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Setup fake HTTP handler that returns queue JSON where numeric values are strings
             var handler = new DelegatingHandlerMock((req, ct) =>
@@ -148,7 +140,7 @@ namespace Listenarr.Api.Tests
             if (task != null) await task;
 
             // Verify the DB download was updated with progress ~50.5 (progress is stored as decimal)
-            var updated = await db.Downloads.FindAsync(download.Id);
+            var updated = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(updated);
             Assert.True(updated.Progress > 50 && updated.Progress < 51);
             // downloaded size should reflect ~50.5% of 100 MB -> ~50.5 MB
@@ -171,7 +163,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Settings: move to output path
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -282,7 +274,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a file under a directory WITHOUT the numeric suffix (this is the real local layout)
             var root = Path.Combine(Path.GetTempPath(), "listenarr-test", Guid.NewGuid().ToString());
@@ -292,7 +284,7 @@ namespace Listenarr.Api.Tests
             Directory.CreateDirectory(realDir);
 
             var sourceFile = Path.Combine(realDir, "The Sound and the Fury.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Settings: move to output path
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -432,7 +424,7 @@ namespace Listenarr.Api.Tests
                 else
                 {
                     // As a last resort, allow a status change to Processing/Queued as indication finalization was scheduled
-                    var updated = await db.Downloads.FindAsync(download.Id);
+                    var updated = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
                     Assert.NotNull(updated);
                     Assert.True(updated.Status == DownloadStatus.Processing || updated.Status == DownloadStatus.Queued || updated.Status == DownloadStatus.Downloading || updated.Status == DownloadStatus.Moved || updated.Status == DownloadStatus.Completed, $"Expected Processing/Queued/Downloading/Moved/Completed when not processed synchronously, got {updated.Status}");
                 }
@@ -449,7 +441,7 @@ namespace Listenarr.Api.Tests
                 var dest = Path.Combine(settings.OutputPath, Path.GetFileName(sourceFile));
                 if (!File.Exists(dest))
                 {
-                    var updated = await db.Downloads.FindAsync(download.Id);
+                    var updated = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
                     Assert.NotNull(updated);
                     Assert.True(updated.Status == DownloadStatus.Processing || updated.Status == DownloadStatus.Queued || updated.Status == DownloadStatus.Moved || updated.Status == DownloadStatus.Completed || updated.Status == DownloadStatus.Downloading, $"Expected finalization to proceed, got status {updated.Status}");
                 }
@@ -473,7 +465,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Build DI provider with settings that enable quick retries
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -584,13 +576,13 @@ namespace Listenarr.Api.Tests
             if (task != null) await task;
 
             // Wait a short time then create the file so the scheduled retry will find it
-            await Task.Delay(200);
+            await Task.Delay(200, TestContext.Current.CancellationToken);
             Directory.CreateDirectory(mappedLocal);
             var sourceFile = Path.Combine(mappedLocal, "The Sound and the Fury.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Wait for the finalization to occur (timeout after a short window so CI is faster)
-            var completed = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(20)));
+            var completed = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(20), TestContext.Current.CancellationToken));
             Assert.True(completed == tcs.Task || Directory.GetFiles(mappedLocal, "*", SearchOption.AllDirectories).Length > 0, "ProcessCompletedDownloadAsync was not invoked within expected time (increased timeout)");
         }
 
@@ -611,15 +603,15 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a directory with multiple audio files
             var dir = Path.Combine(Path.GetTempPath(), "listenarr-multi-test", Guid.NewGuid().ToString());
             Directory.CreateDirectory(dir);
             var fileA = Path.Combine(dir, "part1.mp3");
             var fileB = Path.Combine(dir, "part2.mp3");
-            await File.WriteAllTextAsync(fileA, "data1");
-            await File.WriteAllTextAsync(fileB, "data2");
+            await File.WriteAllTextAsync(fileA, "data1", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(fileB, "data2", TestContext.Current.CancellationToken);
 
             var clientConfig = new DownloadClientConfiguration { Id = download.DownloadClientId, Name = "SABnzbd", DownloadPath = "/downloads/complete" };
 
@@ -679,7 +671,7 @@ namespace Listenarr.Api.Tests
             // Verify the download record was updated to Processing (indicates finalization proceeded)
             // Accept either Processing (immediate) or Queued (deferred/queued) depending on implementation timing.
             // Use the existing in-memory db context to observe updates
-            var updated = await db.Downloads.FindAsync(download.Id);
+            var updated = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(updated);
             Assert.True(updated!.Status == DownloadStatus.Processing || updated.Status == DownloadStatus.Queued, $"Expected Processing or Queued, got {updated.Status}");
 
@@ -707,7 +699,7 @@ namespace Listenarr.Api.Tests
                     var outFiles = Directory.Exists(settingsModel.OutputPath) ? Directory.GetFiles(settingsModel.OutputPath, "*", SearchOption.AllDirectories) : Array.Empty<string>();
                     if (files.Length == 0 && outFiles.Length == 0)
                     {
-                        var updated2 = await db.Downloads.FindAsync(download.Id);
+                        var updated2 = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
                         Assert.NotNull(updated2);
                         Assert.True(updated2.Status == DownloadStatus.Processing || updated2.Status == DownloadStatus.Queued || updated2.Status == DownloadStatus.Moved || updated2.Status == DownloadStatus.Completed, $"Expected queued/processing/moved/completed when no files found and no queue invocation, got {updated2.Status}");
                     }
@@ -730,13 +722,13 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create source file
             var tempDir = Path.Combine(Path.GetTempPath(), "listenarr-test", Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
             var sourceFile = Path.Combine(tempDir, "Test Move.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Settings: move to output path
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -841,13 +833,13 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a file in a temporary directory to represent the completed file
             var tempDir = Path.Combine(Path.GetTempPath(), "listenarr-test", Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
             var sourceFile = Path.Combine(tempDir, "Test NZO.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Settings: move to output path
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -894,7 +886,7 @@ namespace Listenarr.Api.Tests
             httpFactoryMock.Setup(f => f.CreateClient((string?)null)).Returns(httpClient);
 
             // Sanity-check our mock HttpClient handler works as expected
-            var selfResp = await httpClient.GetAsync($"http://localhost:8080/api?mode=history&output=json&apikey=apikey");
+            var selfResp = await httpClient.GetAsync($"http://localhost:8080/api?mode=history&output=json&apikey=apikey", TestContext.Current.CancellationToken);
             Assert.True(selfResp.IsSuccessStatusCode);
 
             var monitor = new DownloadMonitorService(scopeFactory, hubContextMock.Object, loggerMock.Object, httpFactoryMock.Object);
@@ -963,13 +955,13 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create source file
             var tempDir = Path.Combine(Path.GetTempPath(), "listenarr-test", Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
             var sourceFile = Path.Combine(tempDir, "Test Copy.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Settings: copy to output path
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
@@ -1058,7 +1050,7 @@ namespace Listenarr.Api.Tests
             };
 
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var outDir = Path.Combine(Path.GetTempPath(), "listenarr-out", Guid.NewGuid().ToString());
             Directory.CreateDirectory(outDir);

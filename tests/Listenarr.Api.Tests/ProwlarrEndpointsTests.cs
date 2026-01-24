@@ -1,9 +1,6 @@
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Linq;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using System.Net;
+using System.Text.Json;
 using Xunit;
 
 namespace Listenarr.Api.Tests
@@ -21,13 +18,13 @@ namespace Listenarr.Api.Tests
         public async Task SystemStatus_ReturnsJsonWithVersion()
         {
             var client = _factory.CreateClient();
-            var resp = await client.GetAsync("/api/v1/system/status");
+            var resp = await client.GetAsync("/api/v1/system/status", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
             Assert.Equal("application/json", resp.Content.Headers.ContentType?.MediaType);
 
-            using var stream = await resp.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.TryGetProperty("version", out var versionProp));
             Assert.False(string.IsNullOrEmpty(versionProp.GetString()));
         }
@@ -37,13 +34,13 @@ namespace Listenarr.Api.Tests
         {
             var client = _factory.CreateClient();
             // Prefer GET for indexer test in CI to avoid antiforgery middleware interactions during tests
-            var resp = await client.GetAsync("/api/v1/indexer/test");
+            var resp = await client.GetAsync("/api/v1/indexer/test", TestContext.Current.CancellationToken);
 
             // Debug POST to ensure POSTs are routed correctly
-            var debug = await client.PostAsync("/api/v1/debug/test", new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
-            Assert.True(debug.IsSuccessStatusCode, $"Debug POST failed: {(int)debug.StatusCode} {debug.StatusCode}: {await debug.Content.ReadAsStringAsync()}");
+            var debug = await client.PostAsync("/api/v1/debug/test", new StringContent("{}", System.Text.Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            Assert.True(debug.IsSuccessStatusCode, $"Debug POST failed: {(int)debug.StatusCode} {debug.StatusCode}: {await debug.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)}");
 
-            var body = await resp.Content.ReadAsStringAsync();
+            var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             if (!resp.IsSuccessStatusCode)
             {
                 throw new System.Exception($"POST /api/v1/indexer/test returned {(int)resp.StatusCode} {resp.StatusCode}: {body}");
@@ -58,7 +55,7 @@ namespace Listenarr.Api.Tests
 
             // JSON body contains success and version
             using var stream = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(body ?? ""));
-            var doc = await JsonDocument.ParseAsync(stream);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.TryGetProperty("success", out var successProp));
             Assert.True(successProp.GetBoolean());
             Assert.True(doc.RootElement.TryGetProperty("version", out var v2));
@@ -69,13 +66,13 @@ namespace Listenarr.Api.Tests
         public async Task IndexerSchema_ReturnsFieldsArray()
         {
             var client = _factory.CreateClient();
-            var resp = await client.GetAsync("/api/v1/indexer/schema");
+            var resp = await client.GetAsync("/api/v1/indexer/schema", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
             Assert.Equal("application/json", resp.Content.Headers.ContentType?.MediaType);
 
-            using var stream = await resp.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.TryGetProperty("fields", out var fieldsProp));
             Assert.True(fieldsProp.ValueKind == JsonValueKind.Array);
             Assert.True(fieldsProp.GetArrayLength() >= 1);
@@ -98,13 +95,13 @@ namespace Listenarr.Api.Tests
         public async Task IndexerRoot_ReturnsJsonWithImplementations()
         {
             var client = _factory.CreateClient();
-            var resp = await client.GetAsync("/api/v1/indexer/info");
+            var resp = await client.GetAsync("/api/v1/indexer/info", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
             Assert.Equal("application/json", resp.Content.Headers.ContentType?.MediaType);
 
-            using var stream = await resp.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.TryGetProperty("implementations", out var implProp));
             Assert.True(implProp.ValueKind == JsonValueKind.Array);
             bool hasImpl = implProp.EnumerateArray().Any(e => (e.GetString() ?? string.Empty) == "Newznab" || (e.GetString() ?? string.Empty) == "Torznab");
@@ -115,13 +112,13 @@ namespace Listenarr.Api.Tests
         public async Task IndexersList_Get_ReturnsArray()
         {
             var client = _factory.CreateClient();
-            var resp = await client.GetAsync("/api/v1/indexers");
+            var resp = await client.GetAsync("/api/v1/indexers", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
             Assert.Equal("application/json", resp.Content.Headers.ContentType?.MediaType);
 
-            using var stream = await resp.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.ValueKind == JsonValueKind.Array);
         }
 
@@ -130,11 +127,11 @@ namespace Listenarr.Api.Tests
         {
             var client = _factory.CreateClient();
             var payload = "[]";
-            var resp = await client.PostAsync("/api/v1/indexers", new StringContent(payload, System.Text.Encoding.UTF8, "application/json"));
+            var resp = await client.PostAsync("/api/v1/indexers", new StringContent(payload, System.Text.Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            using var stream = await resp.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.TryGetProperty("accepted", out var acc));
             Assert.True(acc.GetBoolean());
         }
@@ -155,15 +152,15 @@ namespace Listenarr.Api.Tests
             };
 
             var arr = "[" + System.Text.Json.JsonSerializer.Serialize(newIndexer) + "]";
-            var resp = await client.PostAsync("/api/v1/indexers", new StringContent(arr, System.Text.Encoding.UTF8, "application/json"));
+            var resp = await client.PostAsync("/api/v1/indexers", new StringContent(arr, System.Text.Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
             // Now fetch persisted indexers via the Prowlarr-compatible endpoint
-            var resp2 = await client.GetAsync("/api/v1/indexer");
+            var resp2 = await client.GetAsync("/api/v1/indexer", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp2.StatusCode);
 
-            using var stream = await resp2.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp2.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.ValueKind == JsonValueKind.Array);
             // Ensure at least one indexer has the name we posted
             bool found = doc.RootElement.EnumerateArray().Any(elem => elem.TryGetProperty("name", out var p) && (p.GetString() ?? string.Empty) == "Prowlarr Test Indexer");
@@ -186,13 +183,13 @@ namespace Listenarr.Api.Tests
             };
 
             var payload = System.Text.Json.JsonSerializer.Serialize(newIndexer);
-            var resp = await client.PostAsync("/api/v1/indexer", new StringContent(payload, System.Text.Encoding.UTF8, "application/json"));
+            var resp = await client.PostAsync("/api/v1/indexer", new StringContent(payload, System.Text.Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
             // Validate response contains created indexer
-            var respBody = await resp.Content.ReadAsStringAsync();
+            var respBody = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             using var respDocStream = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(respBody ?? ""));
-            var respDoc = await JsonDocument.ParseAsync(respDocStream);
+            var respDoc = await JsonDocument.ParseAsync(respDocStream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(respDoc.RootElement.TryGetProperty("indexers", out var idxProp));
             Assert.True(idxProp.ValueKind == JsonValueKind.Array);
             bool foundInResp = idxProp.EnumerateArray().Any(elem => elem.TryGetProperty("name", out var p) && (p.GetString() ?? string.Empty) == "Prowlarr Single Test Indexer");
@@ -207,10 +204,10 @@ namespace Listenarr.Api.Tests
             else
             {
                 // If the response didn't include the created indexer (dedupe / existing indexer case), search persisted indexers by URL
-                var listResp = await client.GetAsync("/api/v1/indexer");
+                var listResp = await client.GetAsync("/api/v1/indexer", TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.OK, listResp.StatusCode);
-                using var listStream = await listResp.Content.ReadAsStreamAsync();
-                var listDoc = await JsonDocument.ParseAsync(listStream);
+                using var listStream = await listResp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+                var listDoc = await JsonDocument.ParseAsync(listStream, cancellationToken: TestContext.Current.CancellationToken);
                 var expectedUrl = "http://localhost:8081/api";
                 var match = listDoc.RootElement.EnumerateArray().FirstOrDefault(elem => elem.TryGetProperty("baseUrl", out var p) && (p.GetString() ?? string.Empty) == expectedUrl);
                 Assert.True(match.ValueKind != JsonValueKind.Undefined, "Posted single indexer should be present in persisted indexers (by URL)");
@@ -218,11 +215,11 @@ namespace Listenarr.Api.Tests
                 id = createdElem.GetProperty("id").GetInt32();
             }
 
-            var getResp = await client.GetAsync($"/api/v1/indexer/{id}");
+            var getResp = await client.GetAsync($"/api/v1/indexer/{id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
 
-            using var getStream = await getResp.Content.ReadAsStreamAsync();
-            var getDoc = await JsonDocument.ParseAsync(getStream);
+            using var getStream = await getResp.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var getDoc = await JsonDocument.ParseAsync(getStream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(getDoc.RootElement.TryGetProperty("id", out var getIdProp));
             Assert.Equal(id, getIdProp.GetInt32());
             Assert.True(getDoc.RootElement.TryGetProperty("settings", out var settingsProp));
@@ -230,18 +227,18 @@ namespace Listenarr.Api.Tests
             Assert.Equal("http://localhost:8081/api", sb.GetString());
 
             // Ensure requesting id 0 returns a compatibility object rather than 404 HTML
-            var respZero = await client.GetAsync("/api/v1/indexer/0");
+            var respZero = await client.GetAsync("/api/v1/indexer/0", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, respZero.StatusCode);
-            var zeroBody = await respZero.Content.ReadAsStringAsync();
+            var zeroBody = await respZero.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Contains("Prowlarr Indexer", zeroBody);
 
 
             // Now fetch persisted indexers via the Prowlarr-compatible endpoint
-            var resp2 = await client.GetAsync("/api/v1/indexer");
+            var resp2 = await client.GetAsync("/api/v1/indexer", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, resp2.StatusCode);
 
-            using var stream = await resp2.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
+            using var stream = await resp2.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(doc.RootElement.ValueKind == JsonValueKind.Array);
             // Ensure at least one indexer has the name we posted
             bool found = doc.RootElement.EnumerateArray().Any(elem => elem.TryGetProperty("name", out var p) && (p.GetString() ?? string.Empty) == "Prowlarr Single Test Indexer");

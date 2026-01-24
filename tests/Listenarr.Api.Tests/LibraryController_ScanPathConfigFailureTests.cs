@@ -1,16 +1,11 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -48,7 +43,7 @@ namespace Listenarr.Api.Tests
 
             var ab = new Audiobook { Title = "Test", BasePath = null };
             dbContext.Audiobooks.Add(ab);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             mockRepo.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((int id) => dbContext.Audiobooks.Find(id));
 

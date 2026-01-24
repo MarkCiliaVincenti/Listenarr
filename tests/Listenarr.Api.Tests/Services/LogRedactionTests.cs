@@ -1,4 +1,3 @@
-using System;
 using Listenarr.Api.Services;
 using Xunit;
 

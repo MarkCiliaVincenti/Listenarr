@@ -1,17 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
-using Xunit;
-using Moq;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Hubs;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.SignalR;
-using Listenarr.Api.Hubs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -29,7 +23,7 @@ namespace Listenarr.Api.Tests
             // Create audiobook with author
             var book = new Audiobook { Title = "Pride and Prejudice", Authors = new System.Collections.Generic.List<string> { "Jane Austen" } };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a temp directory for the expected output (simulate configured OutputPath)
             var outputRoot = Path.Combine(Path.GetTempPath(), "listenarr-test-output", Guid.NewGuid().ToString());
@@ -42,7 +36,7 @@ namespace Listenarr.Api.Tests
 
             // Create source file (as if downloader put it here)
             var sourceFile = Path.Combine(Path.GetTempPath(), $"dl-dbl-{Guid.NewGuid()}.mp3");
-            await File.WriteAllTextAsync(sourceFile, "dummy");
+            await File.WriteAllTextAsync(sourceFile, "dummy", TestContext.Current.CancellationToken);
 
             // Create download record linked to audiobook
             var download = new Download
@@ -57,7 +51,7 @@ namespace Listenarr.Api.Tests
                 CompletedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mock services
             var metadataMock = new Mock<IMetadataService>();
@@ -120,7 +114,7 @@ namespace Listenarr.Api.Tests
             await downloadService.ProcessCompletedDownloadAsync(download.Id, download.FinalPath);
 
             // Assert: either a DB AudiobookFile exists (import ran synchronously) or the file exists under the configured OutputPath
-            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync();
+            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync(TestContext.Current.CancellationToken);
             if (files.Count > 0)
             {
                 Assert.Single(files);
@@ -130,7 +124,7 @@ namespace Listenarr.Api.Tests
                 Assert.Contains("jane austen", norm);
 
                 // Also assert there's no AudiobookFile under an "unknown author" path
-                var unknownFiles = await db.AudiobookFiles.Where(f => f.Path.ToLowerInvariant().Contains("unknown author")).ToListAsync();
+                var unknownFiles = await db.AudiobookFiles.Where(f => f.Path.ToLowerInvariant().Contains("unknown author")).ToListAsync(TestContext.Current.CancellationToken);
                 Assert.Empty(unknownFiles);
             }
             else
@@ -141,7 +135,7 @@ namespace Listenarr.Api.Tests
                 if (!found)
                 {
                     // As a fallback, check that the download record status indicates it was processed or queued for processing
-                    var updated = await db.Downloads.FindAsync(download.Id);
+                    var updated = await db.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
                     Assert.NotNull(updated);
                     Assert.True(updated.Status == DownloadStatus.Moved || updated.Status == DownloadStatus.Completed || updated.Status == DownloadStatus.Processing || updated.Status == DownloadStatus.Queued, $"Expected moved/completed/processing/queued status when not processed synchronously, got {updated.Status}");
                 }

@@ -1,14 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using System.Reflection;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -25,7 +20,7 @@ namespace Listenarr.Api.Tests
 
             // Create temp source file then delete it to simulate race
             var sourceFile = Path.Combine(Path.GetTempPath(), $"dl-missing-{Guid.NewGuid()}.mp3");
-            await File.WriteAllTextAsync(sourceFile, "test");
+            await File.WriteAllTextAsync(sourceFile, "test", TestContext.Current.CancellationToken);
 
             // Destination directory must exist for background service to attempt operations
             var destRoot = Path.Combine(Path.GetTempPath(), $"dl-dest-{Guid.NewGuid()}");
@@ -42,7 +37,7 @@ namespace Listenarr.Api.Tests
                 CompletedAt = DateTime.UtcNow
             };
             db.Downloads.Add(dl);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Setup DI + services
             var services = new ServiceCollection();

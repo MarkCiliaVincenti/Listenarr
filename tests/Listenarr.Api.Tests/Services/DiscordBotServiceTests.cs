@@ -1,25 +1,19 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.FileProviders;
+﻿using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Http;
-using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Xunit;
 
 namespace Listenarr.Api.Tests.Services
 {
     public class DiscordBotServiceTests
     {
-        private readonly Xunit.Abstractions.ITestOutputHelper _output;
+        private readonly ITestOutputHelper _output;
 
-        public DiscordBotServiceTests(Xunit.Abstractions.ITestOutputHelper output)
+        public DiscordBotServiceTests(ITestOutputHelper output)
         {
             _output = output;
         }

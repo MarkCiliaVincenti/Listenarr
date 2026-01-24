@@ -1,11 +1,6 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Listenarr.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using Xunit;
 
 namespace Listenarr.Api.Tests
@@ -380,7 +375,7 @@ namespace Listenarr.Api.Tests
                 UpdatedAt = DateTime.UtcNow
             };
             db.Indexers.Add(indexer);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var logger = new LoggerFactory().CreateLogger<Listenarr.Api.Controllers.IndexersController>();
             var client = new HttpClient(handler);
@@ -390,7 +385,7 @@ namespace Listenarr.Api.Tests
             var result = await controller.Test(indexer.Id);
 
             // Assert - Check failure was persisted to database
-            var dbIndexer = await db.Indexers.FindAsync(indexer.Id);
+            var dbIndexer = await db.Indexers.FirstAsync(x => x.Id == indexer.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(dbIndexer);
             Assert.False(dbIndexer!.LastTestSuccessful);
             Assert.Contains("Invalid API Key", dbIndexer.LastTestError ?? string.Empty);
@@ -430,7 +425,7 @@ namespace Listenarr.Api.Tests
                 UpdatedAt = DateTime.UtcNow
             };
             db.Indexers.Add(indexer);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var logger = new LoggerFactory().CreateLogger<Listenarr.Api.Controllers.IndexersController>();
             var client = new HttpClient(handler);
@@ -440,7 +435,7 @@ namespace Listenarr.Api.Tests
             var result = await controller.Test(indexer.Id);
 
             // Assert
-            var dbIndexer = await db.Indexers.FindAsync(indexer.Id);
+            var dbIndexer = await db.Indexers.FirstAsync(x => x.Id == indexer.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(dbIndexer);
             Assert.True(dbIndexer!.LastTestSuccessful);
             Assert.Null(dbIndexer.LastTestError);

@@ -1,5 +1,5 @@
-using Xunit;
 using Listenarr.Api.Services.Adapters;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

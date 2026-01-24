@@ -1,11 +1,6 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Listenarr.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using Xunit;
 
 namespace Listenarr.Api.Tests
@@ -70,7 +65,7 @@ namespace Listenarr.Api.Tests
             var actionResult = await controller.Test(persisted.Id);
 
             // DB indexer should be updated
-            var updated = await db.Indexers.FindAsync(persisted.Id);
+            var updated = await db.Indexers.FirstAsync(x => x.Id == persisted.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(handler.LastRequest);
             Assert.Contains("apikey=BAD_KEY", handler.LastRequest!.RequestUri!.ToString(), StringComparison.OrdinalIgnoreCase);
             Assert.False(updated!.LastTestSuccessful);
@@ -99,7 +94,7 @@ namespace Listenarr.Api.Tests
 
             var actionResult = await controller.Test(persisted.Id);
 
-            var updated = await db.Indexers.FindAsync(persisted.Id);
+            var updated = await db.Indexers.FirstAsync(x => x.Id == persisted.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(handler.LastRequest);
             Assert.Contains("apikey=GOOD_KEY", handler.LastRequest!.RequestUri!.ToString(), StringComparison.OrdinalIgnoreCase);
             Assert.True(updated!.LastTestSuccessful);

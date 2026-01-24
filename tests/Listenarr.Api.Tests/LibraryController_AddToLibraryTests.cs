@@ -1,18 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -33,7 +26,7 @@ namespace Listenarr.Api.Tests
                 .Returns<Audiobook>(async (ab) =>
                 {
                     await dbContext.Audiobooks.AddAsync(ab);
-                    await dbContext.SaveChangesAsync();
+                    await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
                 });
 
             var mockImageCache = new Mock<IImageCacheService>();
@@ -91,7 +84,7 @@ namespace Listenarr.Api.Tests
             // Assert
             Assert.IsType<OkObjectResult>(actionResult);
 
-            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync();
+            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
             Assert.NotNull(stored);
             Assert.NotNull(stored.Authors);
             Assert.Contains("Legacy Author", stored.Authors);
@@ -119,7 +112,7 @@ namespace Listenarr.Api.Tests
                 .Returns<Audiobook>(async (ab) =>
                 {
                     await dbContext.Audiobooks.AddAsync(ab);
-                    await dbContext.SaveChangesAsync();
+                    await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
                 });
 
             var mockImageCache = new Mock<IImageCacheService>();
@@ -182,7 +175,7 @@ namespace Listenarr.Api.Tests
             // Assert
             Assert.IsType<OkObjectResult>(actionResult);
 
-            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync();
+            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
             Assert.NotNull(stored);
             Assert.Equal($"/config/cache/images/library/B000TEST01.jpg", stored.ImageUrl);
             mockImageCache.Verify(m => m.MoveToLibraryStorageAsync(asin, originalUrl), Times.Once);
@@ -206,7 +199,7 @@ namespace Listenarr.Api.Tests
                 .Returns<Audiobook>(async (ab) =>
                 {
                     await dbContext.Audiobooks.AddAsync(ab);
-                    await dbContext.SaveChangesAsync();
+                    await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
                 });
 
             var mockImageCache = new Mock<IImageCacheService>();
@@ -267,7 +260,7 @@ namespace Listenarr.Api.Tests
             // Assert
             Assert.IsType<OkObjectResult>(actionResult);
 
-            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync();
+            var stored = await dbContext.Audiobooks.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
             Assert.NotNull(stored);
             Assert.Equal($"/config/cache/images/library/derived.jpg", stored.ImageUrl);
             mockImageCache.Verify(m => m.MoveToLibraryStorageAsync(It.IsAny<string>(), imageUrl), Times.Once);

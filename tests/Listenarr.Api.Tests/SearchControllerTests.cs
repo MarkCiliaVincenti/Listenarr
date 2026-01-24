@@ -1,13 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Controllers;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 using System.Text.Json;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

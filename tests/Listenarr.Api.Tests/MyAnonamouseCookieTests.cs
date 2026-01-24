@@ -1,23 +1,15 @@
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.SignalR;
+using Listenarr.Api.Controllers;
 using Listenarr.Api.Hubs;
 using Listenarr.Api.Services;
-using Listenarr.Api.Models;
-using Listenarr.Api.Controllers;
-using Listenarr.Infrastructure.Models;
-using System.Linq;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using System.Net;
 using System.Reflection;
-using Listenarr.Domain.Models;
 using System.Text;
-using System;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using Xunit;
-using Moq;
 using Listenarr.Api.Services;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

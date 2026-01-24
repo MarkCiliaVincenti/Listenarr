@@ -1,16 +1,11 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -53,7 +48,7 @@ namespace Listenarr.Api.Tests
             // Add an audiobook with a non-existent base path
             var ab = new Audiobook { Title = "Test", BasePath = Path.Combine(Path.GetTempPath(), "nonexistent-" + Guid.NewGuid().ToString("N")) };
             dbContext.Audiobooks.Add(ab);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
             // Ensure repo returns the audiobook from the in-memory DB when asked
             mockRepo.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((int id) => dbContext.Audiobooks.Find(id));
 
@@ -120,7 +115,7 @@ namespace Listenarr.Api.Tests
 
             var ab = new Audiobook { Title = "Test", BasePath = tempSource };
             dbContext.Audiobooks.Add(ab);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
             // Ensure repo returns the audiobook from the in-memory DB when asked
             mockRepo.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((int id) => dbContext.Audiobooks.Find(id));
 
@@ -185,7 +180,7 @@ namespace Listenarr.Api.Tests
 
             var ab = new Audiobook { Title = "Test", BasePath = Path.Combine(Path.GetTempPath(), "listenarr-move-src-" + Guid.NewGuid().ToString("N")) };
             dbContext.Audiobooks.Add(ab);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
             // Ensure repo returns the audiobook from the in-memory DB when asked
             mockRepo.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((int id) => dbContext.Audiobooks.Find(id));
 
@@ -212,7 +207,7 @@ namespace Listenarr.Api.Tests
             Assert.NotNull(okObj.Value);
 
             // Ensure DB was updated
-            var updated = await dbContext.Audiobooks.FindAsync(ab.Id);
+            var updated = await dbContext.Audiobooks.FirstAsync(x => x.Id == ab.Id, TestContext.Current.CancellationToken);
             Assert.Equal(target, updated.BasePath);
 
             // Ensure move queue was NOT enqueued

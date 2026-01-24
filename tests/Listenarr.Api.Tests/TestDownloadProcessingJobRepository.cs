@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Listenarr.Api.Repositories;
-using Listenarr.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -32,7 +28,7 @@ namespace Listenarr.Api.Tests
                     .Where(j => ids.Contains(j.DownloadId) && (j.Status == ProcessingJobStatus.Pending || j.Status == ProcessingJobStatus.Processing || j.Status == ProcessingJobStatus.Retry))
                     .Select(j => j.DownloadId)
                     .Distinct()
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
             }
 
             return Task.FromResult(new List<string>());
@@ -52,7 +48,7 @@ namespace Listenarr.Api.Tests
                     .Where(j => ids.Contains(j.DownloadId))
                     .Select(j => j.DownloadId)
                     .Distinct()
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
             }
 
             return Task.FromResult(new List<string>());

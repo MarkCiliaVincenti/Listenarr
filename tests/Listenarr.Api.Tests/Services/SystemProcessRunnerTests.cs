@@ -1,9 +1,7 @@
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Listenarr.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Listenarr.Api.Tests.Services
@@ -21,7 +19,7 @@ namespace Listenarr.Api.Tests.Services
             var psi = CreateEchoProcessStartInfo(secret);
 
             using var reg = runner.RegisterTransientSensitive(new[] { secret });
-            var result = await runner.RunAsync(psi, 5000);
+            var result = await runner.RunAsync(psi, 5000, TestContext.Current.CancellationToken);
 
             Assert.DoesNotContain(secret, result.Stdout);
             Assert.Contains("<redacted>", result.Stdout);
@@ -36,7 +34,7 @@ namespace Listenarr.Api.Tests.Services
             var secret = "TRANSIENT-SECRET-456";
             var psi = CreateEchoProcessStartInfo(secret);
 
-            var result = await runner.RunAsync(psi, 5000);
+            var result = await runner.RunAsync(psi, 5000, TestContext.Current.CancellationToken);
 
             Assert.Contains(secret, result.Stdout);
         }

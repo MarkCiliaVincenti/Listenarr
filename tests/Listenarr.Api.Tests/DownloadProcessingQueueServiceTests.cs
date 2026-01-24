@@ -1,10 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {

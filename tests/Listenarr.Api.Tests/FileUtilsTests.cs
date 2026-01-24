@@ -1,11 +1,7 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-using Xunit;
 using Listenarr.Api.Services;
-using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

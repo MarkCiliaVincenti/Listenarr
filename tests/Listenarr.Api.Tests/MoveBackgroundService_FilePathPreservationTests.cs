@@ -1,15 +1,9 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
-using Moq;
 using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -53,11 +47,11 @@ namespace Listenarr.Api.Tests
 
             var audioFileName = "dune.m4b";
             var srcFile = Path.Combine(src, audioFileName);
-            await File.WriteAllTextAsync(srcFile, "dummy");
+            await File.WriteAllTextAsync(srcFile, "dummy", TestContext.Current.CancellationToken);
 
             var ab = new Audiobook { Title = "MoveFilePathTest", BasePath = src, FilePath = srcFile };
             db.Audiobooks.Add(ab);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var moveQueue = provider.GetRequiredService<IMoveQueueService>();
             var bg = provider.GetRequiredService<MoveBackgroundService>();
@@ -86,7 +80,7 @@ namespace Listenarr.Api.Tests
             // Refresh audiobook from DB using a new scope so we get the latest values written by the background scope
             using var postScope = provider.CreateScope();
             var dbAfter = postScope.ServiceProvider.GetRequiredService<ListenArrDbContext>();
-            var fresh = await dbAfter.Audiobooks.FirstOrDefaultAsync(a => a.Id == ab.Id);
+            var fresh = await dbAfter.Audiobooks.FirstOrDefaultAsync(a => a.Id == ab.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(fresh);
 
             var expectedNewFilePath = Path.GetFullPath(Path.Combine(dst, Path.GetRelativePath(src, srcFile)));
@@ -107,7 +101,7 @@ namespace Listenarr.Api.Tests
             var created = await audioSvc.EnsureAudiobookFileAsync(fresh.Id, expectedNewFilePath, "test");
             Assert.True(created, "AudioFileService failed to associate moved file even though FilePath was updated");
 
-            var fileRecord = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == fresh.Id && f.Path == expectedNewFilePath);
+            var fileRecord = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == fresh.Id && f.Path == expectedNewFilePath, TestContext.Current.CancellationToken);
             Assert.NotNull(fileRecord);
 
             // Cleanup

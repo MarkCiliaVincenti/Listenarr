@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Reflection;
 using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using System.IO;
 
 namespace Listenarr.Api.Tests
 {

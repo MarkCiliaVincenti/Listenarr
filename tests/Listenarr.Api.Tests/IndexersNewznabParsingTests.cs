@@ -1,14 +1,8 @@
-using System.Xml.Linq;
 using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
-using Xunit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

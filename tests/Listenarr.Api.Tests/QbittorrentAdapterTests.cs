@@ -1,11 +1,7 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Listenarr.Api.Services.Adapters;
-using Listenarr.Domain.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using System.Net;
 using Xunit;
 
 namespace Listenarr.Api.Tests
@@ -59,7 +55,7 @@ namespace Listenarr.Api.Tests
                 Password = "123nortex"
             };
 
-            var (success, message) = await adapter.TestConnectionAsync(cfg);
+            var (success, message) = await adapter.TestConnectionAsync(cfg, TestContext.Current.CancellationToken);
 
             Assert.True(success);
             Assert.Contains("reachable", message, StringComparison.OrdinalIgnoreCase);
@@ -92,7 +88,7 @@ namespace Listenarr.Api.Tests
                 Password = null
             };
 
-            var (success, message) = await adapter.TestConnectionAsync(cfg);
+            var (success, message) = await adapter.TestConnectionAsync(cfg, TestContext.Current.CancellationToken);
 
             Assert.False(success);
             Assert.Contains("Forbidden", message, StringComparison.OrdinalIgnoreCase);

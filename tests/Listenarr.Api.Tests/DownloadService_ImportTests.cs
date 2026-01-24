@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using Listenarr.Api.Controllers;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
-using Xunit;
-using Moq;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Controllers;
+using Listenarr.Api.Hubs;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.SignalR;
-using Listenarr.Api.Hubs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -39,7 +32,7 @@ namespace Listenarr.Api.Tests
             // Create audiobook and an existing high-quality file
             var book = new Audiobook { Title = "The High Quality Book" };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Simulate existing AudiobookFile (MP3 320) in DB
             db.AudiobookFiles.Add(new AudiobookFile
@@ -51,13 +44,13 @@ namespace Listenarr.Api.Tests
                 Source = "manual",
                 CreatedAt = DateTime.UtcNow
             });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a temp file representing a lower-quality completed download (MP3 128)
             var tmp = Path.GetTempFileName();
             var tmpMp3 = Path.ChangeExtension(tmp, ".mp3");
             File.Move(tmp, tmpMp3);
-            await File.WriteAllTextAsync(tmpMp3, "dummy");
+            await File.WriteAllTextAsync(tmpMp3, "dummy", TestContext.Current.CancellationToken);
 
             // Create download record linked to audiobook
             var download = new Download
@@ -72,7 +65,7 @@ namespace Listenarr.Api.Tests
                 CompletedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mock services
             var metadataMock = new Mock<IMetadataService>();
@@ -135,7 +128,7 @@ namespace Listenarr.Api.Tests
             await downloadService.ProcessCompletedDownloadAsync(download.Id, download.FinalPath);
 
             // Assert: no new AudiobookFile created for this audiobook (still only the existing one)
-            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync();
+            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync(TestContext.Current.CancellationToken);
             Assert.Single(files);
 
             // Cleanup
@@ -153,22 +146,22 @@ namespace Listenarr.Api.Tests
 
             var book = new Audiobook { Title = "Multi Book", BasePath = Path.Combine(Path.GetTempPath(), "listenarr-multi", Guid.NewGuid().ToString()) };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Ensure destination dir exists
             Directory.CreateDirectory(book.BasePath);
 
             // Create an existing file in destination with name collision
             var existing = Path.Combine(book.BasePath, "chapter1.mp3");
-            await File.WriteAllTextAsync(existing, "existing");
+            await File.WriteAllTextAsync(existing, "existing", TestContext.Current.CancellationToken);
 
             // Create source directory with two files: one collides, one new
             var srcDir = Path.Combine(Path.GetTempPath(), "listenarr-src", Guid.NewGuid().ToString());
             Directory.CreateDirectory(srcDir);
             var file1 = Path.Combine(srcDir, "chapter1.mp3");
             var file2 = Path.Combine(srcDir, "chapter2.mp3");
-            await File.WriteAllTextAsync(file1, "file1");
-            await File.WriteAllTextAsync(file2, "file2");
+            await File.WriteAllTextAsync(file1, "file1", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(file2, "file2", TestContext.Current.CancellationToken);
 
             // Create download pointing at the directory
             var download = new Download
@@ -183,7 +176,7 @@ namespace Listenarr.Api.Tests
                 CompletedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mocks
             var metadataMock = new Mock<IMetadataService>();
@@ -246,7 +239,7 @@ namespace Listenarr.Api.Tests
 
             // Assert: files were moved into destination or imported later (deferred). At minimum we expect either DB records
             // to be created synchronously or files to be present on disk in the audiobook BasePath.
-            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync();
+            var files = await db.AudiobookFiles.Where(f => f.AudiobookId == book.Id).ToListAsync(TestContext.Current.CancellationToken);
             if (files.Count == 0)
             {
                 // If no DB records yet, check that files are present on disk (indicating move completed)
@@ -285,17 +278,17 @@ namespace Listenarr.Api.Tests
             Directory.CreateDirectory(basePath);
             var book = new Audiobook { Title = "Manual Book", BasePath = basePath };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create source file
             var src = Path.Combine(Path.GetTempPath(), $"manual-src-{Guid.NewGuid()}.mp3");
-            await File.WriteAllTextAsync(src, "content");
+            await File.WriteAllTextAsync(src, "content", TestContext.Current.CancellationToken);
 
             // Create an existing destination file to cause collision
             var dest = Path.Combine(basePath, "Manual Book (2025)");
             Directory.CreateDirectory(dest);
             var destFile = Path.Combine(dest, "chapter.mp3");
-            await File.WriteAllTextAsync(destFile, "existing");
+            await File.WriteAllTextAsync(destFile, "existing", TestContext.Current.CancellationToken);
 
             // Prepare controller with mocks
             var repoMock = new Mock<IAudiobookRepository>();
@@ -366,7 +359,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Build client configuration that represents SABnzbd
             var clientConfig = new DownloadClientConfiguration
@@ -462,8 +455,8 @@ namespace Listenarr.Api.Tests
             // Assert: the DB download should still exist (not purged) because SABnzbd history contained the matching entry
             using (var scope = provider.CreateScope())
             {
-                await using var dbCtx = await scope.ServiceProvider.GetListenArrDbContextAsync();
-                var stillExists = await dbCtx.Downloads.FindAsync(download.Id);
+                await using var dbCtx = await scope.ServiceProvider.GetListenArrDbContextAsync(TestContext.Current.CancellationToken);
+                var stillExists = await dbCtx.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
                 Assert.NotNull(stillExists);
             }
 

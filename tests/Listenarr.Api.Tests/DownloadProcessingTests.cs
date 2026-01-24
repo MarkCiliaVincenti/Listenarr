@@ -1,18 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Net.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using Listenarr.Api.Services.Adapters;
-using Xunit;
-using Moq;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Hubs;
 using Listenarr.Api.Services;
+using Listenarr.Api.Services.Adapters;
 using Microsoft.AspNetCore.SignalR;
-using Listenarr.Api.Hubs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -31,10 +26,10 @@ namespace Listenarr.Api.Tests
             // Seed an audiobook and a download
             var book = new Audiobook { Title = "Test Book" };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var testPath = Path.Combine(Path.GetTempPath(), $"dl-test-{Guid.NewGuid()}.m4b");
-            await File.WriteAllTextAsync(testPath, "dummy content");
+            await File.WriteAllTextAsync(testPath, "dummy content", TestContext.Current.CancellationToken);
 
             var download = new Download
             {
@@ -47,7 +42,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mock metadata service
             var metadataMock = new Mock<IMetadataService>();
@@ -143,7 +138,7 @@ namespace Listenarr.Api.Tests
 
             // Assert: audiobook file created (verify with fresh DbContext), or import deferred and file present on disk
             await using var verifyDb = new ListenArrDbContext(options);
-            var file = await verifyDb.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id);
+            var file = await verifyDb.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id, TestContext.Current.CancellationToken);
             if (file != null)
             {
                 Assert.Equal(download.FinalPath, file.Path);
@@ -182,13 +177,13 @@ namespace Listenarr.Api.Tests
                 BasePath = basePath
             };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create source file in a different location
             var sourceDir = Path.Combine(Path.GetTempPath(), $"source-{Guid.NewGuid()}");
             Directory.CreateDirectory(sourceDir);
             var sourceFile = Path.Combine(sourceDir, "source-file.m4b");
-            await File.WriteAllTextAsync(sourceFile, "dummy content");
+            await File.WriteAllTextAsync(sourceFile, "dummy content", TestContext.Current.CancellationToken);
 
             var download = new Download
             {
@@ -201,7 +196,7 @@ namespace Listenarr.Api.Tests
                 StartedAt = DateTime.UtcNow
             };
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mock configuration service to return settings with metadata processing enabled
             // and a naming pattern that would normally create subdirectories
@@ -296,7 +291,7 @@ namespace Listenarr.Api.Tests
 
             // Assert: download is completed and final path is within BasePath (verify with fresh DbContext)
             await using var verifyDb = new ListenArrDbContext(options);
-            var updatedDownload = await verifyDb.Downloads.FindAsync(download.Id);
+            var updatedDownload = await verifyDb.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(updatedDownload);
             Assert.True(updatedDownload.Status == DownloadStatus.Completed || updatedDownload.Status == DownloadStatus.Moved, $"Expected Completed or Moved, got {updatedDownload.Status}");
             Assert.NotNull(updatedDownload.FinalPath);
@@ -324,7 +319,7 @@ namespace Listenarr.Api.Tests
                 Assert.False(File.Exists(sourceFile));
 
                 // Assert: audiobook file record was created
-                var audiobookFile = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id);
+                var audiobookFile = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id, TestContext.Current.CancellationToken);
                 Assert.NotNull(audiobookFile);
                 Assert.Equal(updatedDownload.FinalPath, audiobookFile.Path);
             }

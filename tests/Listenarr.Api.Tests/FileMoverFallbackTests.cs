@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using Listenarr.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -31,7 +28,7 @@ namespace Listenarr.Api.Tests
             Directory.CreateDirectory(dest); // cause Directory.Move to throw (destination exists)
 
             var fileInSource = Path.Combine(source, "track1.mp3");
-            await File.WriteAllTextAsync(fileInSource, "dummy");
+            await File.WriteAllTextAsync(fileInSource, "dummy", TestContext.Current.CancellationToken);
 
             var mover = new FileMover(new NullLogger<FileMover>());
 
@@ -50,7 +47,7 @@ namespace Listenarr.Api.Tests
         {
             var sourceFile = Path.Combine(_root, "a.mp3");
             var destFile = Path.Combine(_root, "b.mp3");
-            await File.WriteAllTextAsync(sourceFile, "content");
+            await File.WriteAllTextAsync(sourceFile, "content", TestContext.Current.CancellationToken);
 
             var mover = new FileMover(new NullLogger<FileMover>());
             var ok = await mover.MoveFileAsync(sourceFile, destFile);

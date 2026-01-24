@@ -1,15 +1,7 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -41,7 +33,7 @@ namespace Listenarr.Api.Tests
             // Audiobook record uses src and points to the local cover
             var ab = new Audiobook { Title = "MoveTest", BasePath = src, ImageUrl = Path.GetFullPath(Path.Combine(src, "cover.jpg")) };
             db.Audiobooks.Add(ab);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Snapshot source timestamps before move
             var srcFile1 = Path.Combine(src, "file1.txt");
@@ -94,7 +86,7 @@ namespace Listenarr.Api.Tests
             using (var scope = scopeFactory.CreateScope())
             {
                 var db2 = scope.ServiceProvider.GetRequiredService<ListenArrDbContext>();
-                var ab2 = await db2.Audiobooks.FindAsync(ab.Id);
+                var ab2 = await db2.Audiobooks.FirstAsync(x => x.Id == ab.Id, TestContext.Current.CancellationToken);
                 Assert.Equal(Path.GetFullPath(dst), ab2.BasePath);
 
                 // Verify ImageUrl was updated to new location when the cover file exists

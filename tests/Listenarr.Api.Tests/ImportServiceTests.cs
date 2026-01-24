@@ -1,14 +1,9 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -25,8 +20,8 @@ namespace Listenarr.Api.Tests
             Directory.CreateDirectory(sourceDir);
             var file1 = Path.Combine(sourceDir, "track1.m4b");
             var file2 = Path.Combine(sourceDir, "track2.m4b");
-            await File.WriteAllTextAsync(file1, "dummy");
-            await File.WriteAllTextAsync(file2, "dummy");
+            await File.WriteAllTextAsync(file1, "dummy", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(file2, "dummy", TestContext.Current.CancellationToken);
 
             var settings = new ApplicationSettings { OutputPath = outputRoot, CompletedFileAction = "Move", EnableMetadataProcessing = false };
 
@@ -51,7 +46,7 @@ namespace Listenarr.Api.Tests
             var importService = provider.GetRequiredService<IImportService>();
 
             // Act
-            var results = await importService.ImportFilesFromDirectoryAsync("dl-1", null, new[] { file1, file2 }, settings);
+            var results = await importService.ImportFilesFromDirectoryAsync("dl-1", null, new[] { file1, file2 }, settings, TestContext.Current.CancellationToken);
 
             // Assert: destination directory created
             Assert.True(Directory.Exists(outputRoot));

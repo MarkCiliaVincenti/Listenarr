@@ -1,12 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 using Moq;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -22,10 +18,10 @@ namespace Listenarr.Api.Tests
             var db = new ListenArrDbContext(options);
             var book = new Audiobook { Title = "IntegrationTest" };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var testFile = Path.Combine(Path.GetTempPath(), $"meta-int-{Guid.NewGuid()}.m4b");
-            await File.WriteAllTextAsync(testFile, "dummy");
+            await File.WriteAllTextAsync(testFile, "dummy", TestContext.Current.CancellationToken);
 
             var metadataMock = new Mock<IMetadataService>();
             metadataMock.Setup(m => m.ExtractFileMetadataAsync(It.IsAny<string>()))
@@ -46,7 +42,7 @@ namespace Listenarr.Api.Tests
             var created = await svc.EnsureAudiobookFileAsync(book.Id, testFile, "test");
             Assert.True(created);
 
-            var file = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id && f.Path == testFile);
+            var file = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id && f.Path == testFile, TestContext.Current.CancellationToken);
             Assert.NotNull(file);
             Assert.Equal(3210, (int)file.DurationSeconds!.Value);
             Assert.Equal("m4b", file.Format);

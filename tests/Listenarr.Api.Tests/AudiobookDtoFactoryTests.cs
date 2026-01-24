@@ -1,10 +1,6 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
 
 namespace Listenarr.Api.Tests
 {
@@ -28,13 +24,13 @@ namespace Listenarr.Api.Tests
             };
 
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var file = new AudiobookFile { AudiobookId = book.Id, Path = "C:\\test\\book\\file1.m4b", Size = 12345, CreatedAt = DateTime.UtcNow };
             db.AudiobookFiles.Add(file);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id);
+            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id, TestContext.Current.CancellationToken);
 
             var dto = AudiobookDtoFactory.BuildFromEntity(db, updated);
 
@@ -63,9 +59,9 @@ namespace Listenarr.Api.Tests
             };
 
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id);
+            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id, TestContext.Current.CancellationToken);
             var dto = AudiobookDtoFactory.BuildFromEntity(db, updated);
 
             Assert.True(dto.Wanted == true);

@@ -1,17 +1,11 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Moq.Protected;
-using Xunit;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
-using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Moq.Protected;
+using System.Net;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

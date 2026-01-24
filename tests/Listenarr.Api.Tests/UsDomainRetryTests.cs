@@ -1,12 +1,6 @@
-﻿using System;
-using System.Net;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Net;
 using Xunit;
 
 namespace Listenarr.Api.Tests
@@ -34,7 +28,7 @@ namespace Listenarr.Api.Tests
             var svc = new AudibleSearchService(httpClient, new NullLogger<AudibleSearchService>(), new TestConfigurationService());
 
             // Call internal TryFetchProductTitle directly (InternalsVisibleTo applied)
-            var title = await svc.TryFetchProductTitle("https://www.audible.de/pd/test-product", "B0TESTASIN");
+            var title = await svc.TryFetchProductTitle("https://www.audible.de/pd/test-product", "B0TESTASIN", TestContext.Current.CancellationToken);
 
             // Assert that the service retried and returned the US og:title
             Assert.Equal("US Product Title", title);

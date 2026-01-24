@@ -1,12 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
-using Xunit;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -23,7 +20,7 @@ namespace Listenarr.Api.Tests
             var db = new ListenArrDbContext(options);
             var audiobook = new Audiobook { Title = "Test Book", Monitored = true };
             db.Audiobooks.Add(audiobook);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Build service provider with required services (including a mock metadata service)
             var services = new ServiceCollection();
@@ -45,21 +42,21 @@ namespace Listenarr.Api.Tests
             var svc = new AudioFileService(scopeFactory, logger, memoryCache, limiter);
 
             // Use temp file
-            var tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"afs-test-{Guid.NewGuid()}.m4b");
-            System.IO.File.WriteAllText(tempFile, "dummy");
+            var tempFile = Path.Combine(Path.GetTempPath(), $"afs-test-{Guid.NewGuid()}.m4b");
+            File.WriteAllText(tempFile, "dummy");
 
             // Act
             var created = await svc.EnsureAudiobookFileAsync(audiobook.Id, tempFile, "test");
 
             // Assert
             Assert.True(created);
-            var updated = await db.Audiobooks.FindAsync(audiobook.Id);
+            var updated = await db.Audiobooks.FirstAsync(x => x.Id == audiobook.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(updated.FilePath);
-            Assert.True(updated.FilePath.Contains(System.IO.Path.GetFileName(tempFile)) || updated.FilePath == tempFile);
+            Assert.True(updated.FilePath.Contains(Path.GetFileName(tempFile)) || updated.FilePath == tempFile);
             Assert.True(updated.FileSize > 0);
 
             // Cleanup
-            System.IO.File.Delete(tempFile);
+            File.Delete(tempFile);
         }
     }
 }

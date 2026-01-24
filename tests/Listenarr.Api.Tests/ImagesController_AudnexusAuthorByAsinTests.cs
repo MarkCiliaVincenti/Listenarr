@@ -1,6 +1,3 @@
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Listenarr.Api.Controllers;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;

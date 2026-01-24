@@ -1,19 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Text.Json;
 using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -46,9 +39,9 @@ namespace Listenarr.Api.Tests
                 QualityProfileId = null
             };
 
-            await dbContext.Audiobooks.AddAsync(a1);
-            await dbContext.Audiobooks.AddAsync(a2);
-            await dbContext.SaveChangesAsync();
+            await dbContext.Audiobooks.AddAsync(a1, TestContext.Current.CancellationToken);
+            await dbContext.Audiobooks.AddAsync(a2, TestContext.Current.CancellationToken);
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Mock repository to return our DB entries by id
             var mockRepo = new Mock<IAudiobookRepository>();
@@ -128,7 +121,7 @@ namespace Listenarr.Api.Tests
             Assert.True(second.GetProperty("errors").GetArrayLength() >= 1);
 
             // Verify DB changes persisted for a1
-            var storedA1 = await dbContext.Audiobooks.FindAsync(a1.Id);
+            var storedA1 = await dbContext.Audiobooks.FirstAsync(x => x.Id == a1.Id, TestContext.Current.CancellationToken);
             Assert.NotNull(storedA1);
             Assert.True(storedA1.Monitored);
             Assert.Equal(42, storedA1.QualityProfileId);

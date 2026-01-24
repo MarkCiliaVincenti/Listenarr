@@ -1,6 +1,4 @@
-using System;
 using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

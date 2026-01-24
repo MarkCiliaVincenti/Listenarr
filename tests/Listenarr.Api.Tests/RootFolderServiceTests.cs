@@ -1,15 +1,9 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
-using Xunit.Abstractions;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit.Sdk;
-using Listenarr.Infrastructure.Models;
 using Listenarr.Api.Repositories;
 using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -26,7 +20,7 @@ namespace Listenarr.Api.Tests
 
             var db = new ListenArrDbContext(options);
             db.RootFolders.Add(new RootFolder { Name = "A", Path = "C:\\books" });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dbFactory = new TestDbFactory(options);
             var repo = new EfRootFolderRepository(dbFactory, null!);
@@ -46,7 +40,7 @@ namespace Listenarr.Api.Tests
             var root = new RootFolder { Name = "A", Path = "C:\\books" };
             db.RootFolders.Add(root);
             db.Audiobooks.Add(new Domain.Models.Audiobook { Title = "T", BasePath = "C:\\books" });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dbFactory = new TestDbFactory(options);
             var repo = new EfRootFolderRepository(dbFactory, null!);
@@ -68,7 +62,7 @@ namespace Listenarr.Api.Tests
             db.RootFolders.Add(root);
             db.Audiobooks.Add(new Domain.Models.Audiobook { Title = "A1", BasePath = "C:\\root\\Author\\Title" });
             db.Audiobooks.Add(new Domain.Models.Audiobook { Title = "A2", BasePath = "C:\\root" });
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dbFactory = new TestDbFactory(options);
             var repo = new EfRootFolderRepository(dbFactory, null!);
@@ -115,7 +109,7 @@ namespace Listenarr.Api.Tests
             var ab1 = new Domain.Models.Audiobook { Id = 1, Title = "A1", BasePath = "C:\\root\\Author\\Title" };
             var ab2 = new Domain.Models.Audiobook { Id = 2, Title = "A2", BasePath = "C:\\root" };
             db.Audiobooks.AddRange(ab1, ab2);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dbFactory = new TestDbFactory(options);
             var repo = new EfRootFolderRepository(dbFactory, null!);

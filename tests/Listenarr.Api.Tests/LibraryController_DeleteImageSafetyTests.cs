@@ -1,15 +1,11 @@
-using System.Threading.Tasks;
-using Xunit;
-using Moq;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Listenarr.Api.Controllers;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

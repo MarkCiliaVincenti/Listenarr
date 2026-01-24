@@ -1,10 +1,9 @@
 // csharp
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 using Listenarr.Infrastructure.Extensions; // extension lives in Infrastructure project
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

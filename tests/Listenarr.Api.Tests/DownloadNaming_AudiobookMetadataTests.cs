@@ -1,16 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Net.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
-using Xunit;
-using Moq;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Hubs;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.SignalR;
-using Listenarr.Api.Hubs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -35,11 +30,11 @@ namespace Listenarr.Api.Tests
             // Create audiobook with Authors so naming should pick them
             var book = new Audiobook { Title = "Pride and Prejudice", Authors = new System.Collections.Generic.List<string> { "Jane Austen" } };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a temporary source file
             var testFile = Path.Combine(Path.GetTempPath(), $"dl-naming-{Guid.NewGuid()}.mp3");
-            await File.WriteAllTextAsync(testFile, "dummy content");
+            await File.WriteAllTextAsync(testFile, "dummy content", TestContext.Current.CancellationToken);
 
             var download = new Download
             {
@@ -54,7 +49,7 @@ namespace Listenarr.Api.Tests
             };
 
             db.Downloads.Add(download);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create the output directory that the code will use as fallback
             var outputDir = Path.Combine(Directory.GetCurrentDirectory(), "completed");
@@ -144,10 +139,10 @@ namespace Listenarr.Api.Tests
 
             // Reload the download and audiobook files using a fresh DbContext instance
             await using var verifyDb = new ListenArrDbContext(options);
-            var updated = await verifyDb.Downloads.FindAsync(download.Id);
+            var updated = await verifyDb.Downloads.FirstAsync(x => x.Id == download.Id, TestContext.Current.CancellationToken);
             Assert.True(updated.Status == DownloadStatus.Completed || updated.Status == DownloadStatus.Moved, $"Expected Completed or Moved, got {updated.Status}");
 
-            var fileRecord = await verifyDb.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id);
+            var fileRecord = await verifyDb.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id, TestContext.Current.CancellationToken);
             // Import may be deferred (queued) so a DB file record may not exist synchronously; accept either outcome.
             if (fileRecord != null)
             {

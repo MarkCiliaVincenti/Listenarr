@@ -1,13 +1,7 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -42,7 +36,7 @@ namespace Listenarr.Api.Tests
 
             var ab = new Audiobook { Title = "MoveFailTest", BasePath = src };
             db.Audiobooks.Add(ab);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Start background service
             await bg.StartAsync(CancellationToken.None);
@@ -68,7 +62,7 @@ namespace Listenarr.Api.Tests
             using (var scope = provider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var db2 = scope.ServiceProvider.GetRequiredService<ListenArrDbContext>();
-                var dbJob = await db2.MoveJobs.FindAsync(jobId);
+                var dbJob = await db2.MoveJobs.FirstAsync(x => x.Id == jobId, TestContext.Current.CancellationToken);
                 Assert.True(dbJob.AttemptCount > 0, "AttemptCount was not incremented on failure");
             }
 

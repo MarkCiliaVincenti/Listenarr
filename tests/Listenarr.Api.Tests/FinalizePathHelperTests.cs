@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Services;
 using Xunit;
 
 namespace Listenarr.Api.Tests

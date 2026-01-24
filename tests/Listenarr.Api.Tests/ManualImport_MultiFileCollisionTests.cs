@@ -1,12 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-using Moq;
-using Listenarr.Api.Controllers;
-using Listenarr.Domain.Models;
+﻿using Listenarr.Api.Controllers;
 using Listenarr.Api.Services;
+using Moq;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -26,8 +21,8 @@ namespace Listenarr.Api.Tests
             Directory.CreateDirectory(srcDir);
             var src1 = Path.Combine(srcDir, "one.mp3");
             var src2 = Path.Combine(srcDir, "two.mp3");
-            await File.WriteAllTextAsync(src1, "one");
-            await File.WriteAllTextAsync(src2, "two");
+            await File.WriteAllTextAsync(src1, "one", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(src2, "two", TestContext.Current.CancellationToken);
 
             // Mocks
             var repoMock = new Mock<IAudiobookRepository>();

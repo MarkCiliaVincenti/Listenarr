@@ -1,13 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Threading;
+﻿using Listenarr.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 using Moq;
-using Listenarr.Domain.Models;
-using Listenarr.Api.Services;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -23,10 +18,10 @@ namespace Listenarr.Api.Tests
             var db = new ListenArrDbContext(options);
             var book = new Audiobook { Title = "Test" };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var testFile = Path.Combine(Path.GetTempPath(), $"afs-test-{Guid.NewGuid()}.m4b");
-            await File.WriteAllTextAsync(testFile, "dummy");
+            await File.WriteAllTextAsync(testFile, "dummy", TestContext.Current.CancellationToken);
 
             var metadataMock = new Mock<IMetadataService>();
             metadataMock.Setup(m => m.ExtractFileMetadataAsync(It.IsAny<string>()))
@@ -48,7 +43,7 @@ namespace Listenarr.Api.Tests
             var created = await svc.EnsureAudiobookFileAsync(book.Id, testFile, "test");
             Assert.True(created);
 
-            var file = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id && f.Path == testFile);
+            var file = await db.AudiobookFiles.FirstOrDefaultAsync(f => f.AudiobookId == book.Id && f.Path == testFile, TestContext.Current.CancellationToken);
             Assert.NotNull(file);
             Assert.Equal("m4b", file.Format);
         }
@@ -93,9 +88,9 @@ namespace Listenarr.Api.Tests
             var db = new ListenArrDbContext(options);
 
             // Create audiobook with a legacy FilePath in Author/BookA folder
-            var bookA = new Audiobook { Title = "Book A", Authors = new System.Collections.Generic.List<string> { "Author" }, FilePath = Path.Combine(Path.GetTempPath(), "Author", "BookA", "track1.m4b") };
+            var bookA = new Audiobook { Title = "Book A", Authors = new List<string> { "Author" }, FilePath = Path.Combine(Path.GetTempPath(), "Author", "BookA", "track1.m4b") };
             db.Audiobooks.Add(bookA);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Ensure the audiobook directory exists on disk for the containment check
             var bookADir = Path.GetDirectoryName(bookA.FilePath);
@@ -105,7 +100,7 @@ namespace Listenarr.Api.Tests
             var rejectedDir = Path.Combine(Path.GetTempPath(), "Author", "BookB");
             if (!Directory.Exists(rejectedDir)) Directory.CreateDirectory(rejectedDir);
             var rejectedFile = Path.Combine(rejectedDir, $"rejected-{Guid.NewGuid()}.m4b");
-            await File.WriteAllTextAsync(rejectedFile, "dummy");
+            await File.WriteAllTextAsync(rejectedFile, "dummy", TestContext.Current.CancellationToken);
 
             var metadataMock = new Mock<IMetadataService>();
             metadataMock.Setup(m => m.ExtractFileMetadataAsync(It.IsAny<string>())).ReturnsAsync(new AudioMetadata());
@@ -126,7 +121,7 @@ namespace Listenarr.Api.Tests
             Assert.False(result);
 
             // History entry should be created
-            var history = await db.History.FirstOrDefaultAsync(h => h.AudiobookId == bookA.Id && h.EventType == "File Association Refused");
+            var history = await db.History.FirstOrDefaultAsync(h => h.AudiobookId == bookA.Id && h.EventType == "File Association Refused", TestContext.Current.CancellationToken);
             Assert.NotNull(history);
             Assert.Contains("Refused to associate file", history.Message);
         }

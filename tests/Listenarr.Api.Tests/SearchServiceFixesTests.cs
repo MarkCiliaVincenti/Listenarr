@@ -1,8 +1,6 @@
-using System;
-using Xunit;
 using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

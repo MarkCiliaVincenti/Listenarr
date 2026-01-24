@@ -1,5 +1,4 @@
-﻿using Listenarr.Domain.Models;
-using Listenarr.Infrastructure.Models;
+﻿using Listenarr.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 

@@ -1,6 +1,4 @@
-using System.Threading.Tasks;
 using Listenarr.Api.Repositories;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {

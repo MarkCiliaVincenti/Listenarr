@@ -1,10 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -26,14 +21,14 @@ namespace Listenarr.Api.Tests
             // Monitored with files -> wanted = false
             var hasFileBook = new Audiobook { Title = "Has File", Monitored = true };
             db.Audiobooks.Add(hasFileBook);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var file = new AudiobookFile { AudiobookId = hasFileBook.Id, Path = "C:\\temp\\f.m4b", Size = 1234, CreatedAt = DateTime.UtcNow };
             db.AudiobookFiles.Add(file);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Exercise repository directly similar to controller
-            var audiobooks = await db.Audiobooks.Include(a => a.Files).ToListAsync();
+            var audiobooks = await db.Audiobooks.Include(a => a.Files).ToListAsync(TestContext.Current.CancellationToken);
 
             var dto = audiobooks.Select(a => new
             {
@@ -59,19 +54,19 @@ namespace Listenarr.Api.Tests
 
             var book = new Audiobook { Title = "Single Book", Monitored = true };
             db.Audiobooks.Add(book);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Initially should be wanted
-            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id);
+            var updated = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id, TestContext.Current.CancellationToken);
             var wanted = updated.Monitored && (updated.Files == null || !updated.Files.Any());
             Assert.True(wanted);
 
             // Add file and re-evaluate
             var file = new AudiobookFile { AudiobookId = book.Id, Path = "C:\\temp\\single.m4b", Size = 1024, CreatedAt = DateTime.UtcNow };
             db.AudiobookFiles.Add(file);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var updated2 = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id);
+            var updated2 = await db.Audiobooks.Include(a => a.Files).FirstOrDefaultAsync(a => a.Id == book.Id, TestContext.Current.CancellationToken);
             var wanted2 = updated2.Monitored && (updated2.Files == null || !updated2.Files.Any());
             Assert.False(wanted2);
         }

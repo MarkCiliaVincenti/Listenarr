@@ -1,12 +1,8 @@
-using System;
-using System.Threading.Tasks;
+using Listenarr.Api.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -39,7 +35,7 @@ namespace Listenarr.Api.Tests
             using (var scope = scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ListenArrDbContext>();
-                var dbJob = await db.MoveJobs.FindAsync(jobId);
+                var dbJob = await db.MoveJobs.FirstAsync(x => x.Id == jobId, TestContext.Current.CancellationToken);
                 Assert.NotNull(dbJob);
                 Assert.Equal("Processing", dbJob!.Status);
             }

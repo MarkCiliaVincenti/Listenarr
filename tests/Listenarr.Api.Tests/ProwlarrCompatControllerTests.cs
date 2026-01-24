@@ -1,14 +1,11 @@
-using System.Threading.Tasks;
+using Listenarr.Api.Controllers;
+using Listenarr.Api.Services;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
-using Listenarr.Api.Controllers;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Api.Services;
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using System;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

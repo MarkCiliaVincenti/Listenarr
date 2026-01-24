@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Listenarr.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Listenarr.Infrastructure.Models;
+using System.Collections.Concurrent;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -98,7 +94,7 @@ namespace Listenarr.Api.Tests
         public Task<List<Download>> GetAllAsync()
         {
             if (_db != null)
-                return _db.Downloads.ToListAsync();
+                return _db.Downloads.ToListAsync(TestContext.Current.CancellationToken);
 
             return Task.FromResult(_mem.Values.ToList());
         }
@@ -106,7 +102,7 @@ namespace Listenarr.Api.Tests
         public Task<List<Download>> GetByClientAsync(string clientId)
         {
             if (_db != null)
-                return _db.Downloads.Where(d => d.DownloadClientId == clientId).ToListAsync();
+                return _db.Downloads.Where(d => d.DownloadClientId == clientId).ToListAsync(TestContext.Current.CancellationToken);
 
             var list = _mem.Values.Where(d => d.DownloadClientId == clientId).ToList();
             return Task.FromResult(list);
@@ -116,7 +112,7 @@ namespace Listenarr.Api.Tests
         {
             var idSet = ids?.ToList() ?? new List<string>();
             if (_db != null)
-                return _db.Downloads.Where(d => idSet.Contains(d.Id)).ToListAsync();
+                return _db.Downloads.Where(d => idSet.Contains(d.Id)).ToListAsync(TestContext.Current.CancellationToken);
 
             var list = _mem.Values.Where(d => idSet.Contains(d.Id)).ToList();
             return Task.FromResult(list);

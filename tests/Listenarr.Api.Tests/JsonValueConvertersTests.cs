@@ -1,9 +1,6 @@
 // csharp
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Xunit;
 using Listenarr.Infrastructure.Persistence.Converters;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

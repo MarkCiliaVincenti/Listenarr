@@ -1,6 +1,5 @@
-using System;
-using System.Reflection;
 using Listenarr.Api.Services;
+using System.Reflection;
 using Xunit;
 
 namespace Listenarr.Api.Tests

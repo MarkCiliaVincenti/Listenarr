@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 using System.IO.Compression;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {

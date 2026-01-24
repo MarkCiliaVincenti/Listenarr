@@ -1,16 +1,11 @@
-using System;
-using Microsoft.Extensions.Configuration;
-using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using Microsoft.AspNetCore.SignalR;
 using Listenarr.Api.Services;
 using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json.Nodes;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {

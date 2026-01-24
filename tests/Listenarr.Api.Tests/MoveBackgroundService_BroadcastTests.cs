@@ -1,17 +1,9 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using Listenarr.Api.Services;
-using Listenarr.Infrastructure.Models;
-using Listenarr.Domain.Models;
 using Microsoft.AspNetCore.SignalR;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Xunit;
 
 namespace Listenarr.Api.Tests
 {
@@ -83,7 +75,7 @@ namespace Listenarr.Api.Tests
 
             var ab = new Audiobook { Title = "MoveBroadcastTest", BasePath = src };
             db.Audiobooks.Add(ab);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Ensure data is visible from a newly created scope (mirrors background service behavior)
             using (var verifyScope = provider.CreateScope())

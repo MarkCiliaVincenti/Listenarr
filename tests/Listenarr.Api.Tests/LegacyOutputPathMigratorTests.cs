@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Listenarr.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
 
 namespace Listenarr.Api.Tests
 {

@@ -1,13 +1,9 @@
-using System;
-using System.Threading.Tasks;
+using Listenarr.Api.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
-using Listenarr.Api.Services;
-using Listenarr.Domain.Models;
-using Listenarr.Infrastructure.Models;
 
 namespace Listenarr.Api.Tests
 {
@@ -85,12 +81,12 @@ namespace Listenarr.Api.Tests
             var db = scope.ServiceProvider.GetRequiredService<ListenArrDbContext>();
 
             // Act - ensure settings exist, set webhooks directly, save, read back
-            var settings = await db.ApplicationSettings.FirstOrDefaultAsync(s => s.Id == 1);
+            var settings = await db.ApplicationSettings.FirstOrDefaultAsync(s => s.Id == 1, TestContext.Current.CancellationToken);
             if (settings == null)
             {
                 settings = new ApplicationSettings();
                 db.ApplicationSettings.Add(settings);
-                await db.SaveChangesAsync();
+                await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             }
 
             settings.Webhooks = new System.Collections.Generic.List<WebhookConfiguration>
@@ -98,9 +94,9 @@ namespace Listenarr.Api.Tests
                 new WebhookConfiguration { Name = "DirectWebhook", Url = "https://example.test/direct", Type = "Zapier" }
             };
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var reloaded = await db.ApplicationSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Id == 1);
+            var reloaded = await db.ApplicationSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Id == 1, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(reloaded);
